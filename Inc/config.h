@@ -668,14 +668,14 @@
 */
 #define GD32F103Rx              1   // define if you are using a GD32F103Rx MCU to set system clock to 108MHz  
 #define HOCP                        // Tie PA6/PB12 hardware over-current signals into TIM1/TIM8 break inputs
-#define BEEPER_OFF
-#define ENCODER_X
-//#define ENCODER_Y
-#define INTBRK_L_EN
-//#define EXTBRK_EN                   // Enable external braking resistor pin
-#ifdef EXTBRK_EN
-#define EXTBRK_USE_CH3                    
-//#define EXTBRK_USE_CH4
+#define BEEPER_OFF                  //use led as beeper
+#define ENCODER_X                   //enable X encoder to right motor
+//#define ENCODER_Y                 //enable Y encoder to left motor
+#define INTBRK_L_EN                 //enable brake resistor control on PHASE A left side driver, do not disable if break reistor is connected 
+//#define EXTBRK_EN                 // enable brake resistor control pin on left uart port, pick PA2 or PA3 below
+#ifdef EXTBRK_EN                         
+#define EXTBRK_USE_CH3              // PA2      
+//#define EXTBRK_USE_CH4            // PA3
 #endif
 
 #if defined (INTBRK_L_EN) || defined (EXTBRK_EN)
@@ -688,17 +688,17 @@
 
 #if defined ENCODER_X
 #define ENCODER_X_PPR              2048     // Pulses per revolution
-#define ALIGNMENT_X_POWER        6553      // [-] Voltage used for sensor alignment. [-1000, 1000]
+#define ALIGNMENT_X_POWER        6553      // [-] Voltage used for sensor alignment. [-16000, 16000]
 #endif
 #if defined ENCODER_Y
-#define ENCODER_Y_PPR            2048
-#define ALIGNMENT_Y_POWER        6553
+#define ENCODER_Y_PPR            2048        // Pulses per revolution 
+#define ALIGNMENT_Y_POWER        6553        // [-] Voltage used for sensor alignment. [-16000, 16000]
 #endif
 
   #define FLASH_WRITE_KEY        0x1011    // Flash memory writing key.
   #undef  CTRL_MOD_REQ
   #undef  CTRL_TYP_SEL
-  #define CTRL_TYP_SEL           FOC_CTRL 
+  #define CTRL_TYP_SEL           FOC_CTRL   
   #define CTRL_MOD_REQ           TRQ_MODE  
   
   #define TANK_STEERING  
@@ -719,25 +719,22 @@
 #define DC_LINK_WATCHDOG_ENABLE 
 #undef FIELD_WEAK_ENA
 #define FIELD_WEAK_ENA           0 
-//#define RC_PWM_RIGHT           0         // use RC PWM as input on the RIGHT cable.  Number indicates priority for dual-input. Disable DEBUG_SERIAL_USART3!
-#define HW_PWM                   0 
-//#define CONTROL_ADC              1 
-//#define SW_PWM_RIGHT           0         // UsingPWM input capture on PB10 and PB11 (duty cycle mapped to 0 to -16000, 0, 16000,)
-//#define SW_PWM_LEFT            0 
-//#define CONTROL_PPM_LEFT 0
-//#define PPM_NUM_CHANNELS 1
-//#define CONTROL_SERIAL_USART3  0    // left sensor board cable, disable if ADC or PPM is used! For Arduino control check the hoverSerial.ino
-//#define FEEDBACK_SERIAL_USART3      // left sensor board cable, disable if ADC or PPM is used!
-  #define PRI_INPUT1             0, -16000, 0, 16000,   0    
-  #define PRI_INPUT2             2, -16000, 0, 16000,   0   
-  #define RATE                   32767 
-  #define FILTER                 65535
-  //#define INVERT_R_DIRECTION
-  //#define INVERT_L_DIRECTION
-  //#define DEBUG_SERIAL_USART3         // left sensor cable debug
- 
-  
-  
+//#define RC_PWM_RIGHT           0         // Use RC PWM as input on the RIGHT cable. (duty cycle mapped to 0 to -1000, 0, 1000) Number indicates priority for dual-input. Disable DEBUG_SERIAL_USART3!
+#define HW_PWM                   0         // Use hw pwm pin PB5 on left side L_MTR_HALL_PHA  (lowest noise input)
+//#define CONTROL_ADC            1         // use ADC as input pn pins PA2 and PA3, cant be used with extbrk on PA2/PA3  
+//#define SW_PWM_RIGHT           0         // Use PWM input capture on PB10 and PB11 (duty cycle mapped to 0 to -16000, 0, 16000)
+//#define SW_PWM_LEFT            0         // Use PWM input capture on PA2 and PA3 (duty cycle mapped to 0 to -16000, 0, 16000)   (cant be use with extbrk on PA2/PA3)
+//#define CONTROL_PPM_LEFT       0         // use PPM-Sum as input on the LEFT cable. Number indicates priority for dual-input. Disable DEBUG_SERIAL_USART2!
+//#define PPM_NUM_CHANNELS       1         // total number of PPM channels to receive, even if they are not used.
+//#define CONTROL_SERIAL_USART3  0         // left sensor board cable, disable if ADC or PPM is used! For Arduino control check the hoverSerial.ino
+//#define FEEDBACK_SERIAL_USART3           // left sensor board cable, disable if ADC or PPM is used!
+  #define PRI_INPUT1             0, -16000, 0, 16000,   0    //change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
+  #define PRI_INPUT2             2, -16000, 0, 16000,   0    //change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
+  #define RATE                   32767     //leave to max rate 32767 if you want instant response  (may be needed if you need slower response)                  
+  #define FILTER                 65535     //leave to max filter 65535 if you want instant response (may be needed if input is noisy)
+  //#define INVERT_R_DIRECTION             //invert right motor direction
+  //#define INVERT_L_DIRECTION             //invert left motor direction
+  //#define DEBUG_SERIAL_USART3            // left sensor cable debug
 #endif
 
 
@@ -747,13 +744,14 @@
 */
 #define GD32F103Rx              1   // define if you are using a GD32F103Rx MCU to set system clock to 108MHz  
 #define HOCP                        // Tie PA6/PB12 hardware over-current signals into TIM1/TIM8 break inputs
-#define BEEPER_OFF
-#define ENCODER_X
-#define ENCODER_Y
-#define EXTBRK_EN                   // Enable external braking resistor pin
-#ifdef EXTBRK_EN
-#define EXTBRK_USE_CH3                    
-//#define EXTBRK_USE_CH4
+#define BEEPER_OFF                  //use led as beeper
+#define ENCODER_X                   //enable X encoder to right motor
+#define ENCODER_Y                   //enable Y encoder to left motor
+//#define INTBRK_L_EN               //enable brake resistor control on PHASE A left side driver, do not disable if break reistor is connected 
+#define EXTBRK_EN                   // enable brake resistor control pin on left uart port, pick PA2 or PA3 below
+#ifdef EXTBRK_EN                         
+#define EXTBRK_USE_CH3              // PA2      
+//#define EXTBRK_USE_CH4            // PA3
 #endif
 
 #if defined (INTBRK_L_EN) || defined (EXTBRK_EN)
@@ -765,12 +763,12 @@
 #endif  
 
 #if defined ENCODER_X
-#define ENCODER_X_PPR              2048     // Pulses per revolution
-#define ALIGNMENT_X_POWER        6553      // [-] Voltage used for sensor alignment. [-1000, 1000]
+#define ENCODER_X_PPR            2048       // Pulses per revolution
+#define ALIGNMENT_X_POWER        6553       // [-] Voltage used for sensor alignment. [-16000, 16000]
 #endif
 #if defined ENCODER_Y
-#define ENCODER_Y_PPR            2048
-#define ALIGNMENT_Y_POWER        6553
+#define ENCODER_Y_PPR            2048        // Pulses per revolution 
+#define ALIGNMENT_Y_POWER        6553        // [-] Voltage used for sensor alignment. [-16000, 16000]
 #endif
 
   #define FLASH_WRITE_KEY        0x1012    // Flash memory writing key.
@@ -794,19 +792,22 @@
 #define N_MOT_MAX                2000            // [rpm] Maximum motor speed limit
 
 #define FIELD_WEAK_ENA           0 
-//#define RC_PWM_RIGHT           0         // use RC PWM as input on the RIGHT cable.  Number indicates priority for dual-input. Disable DEBUG_SERIAL_USART3!
-//#define HW_PWM                 0 
-#define SW_PWM_RIGHT             0         // UsingPWM input capture on PB10 and PB11 (duty cycle mapped to 0 to -1000, 0, 1000,)
-//#define SW_PWM_LEFT              0 
-//#define CONTROL_SERIAL_USART3  0    // left sensor board cable, disable if ADC or PPM is used! For Arduino control check the hoverSerial.ino
-//#define FEEDBACK_SERIAL_USART3      // left sensor board cable, disable if ADC or PPM is used!
-  #define PRI_INPUT1             2, -1000, 0, 1000,   0    
-  #define PRI_INPUT2             2, -1000, 0, 1000,   0   
+//#define RC_PWM_RIGHT           0         // Use RC PWM as input on the RIGHT cable. (duty cycle mapped to 0 to -1000, 0, 1000) Number indicates priority for dual-input. Disable DEBUG_SERIAL_USART3!
+#define HW_PWM                   0         // Use hw pwm pin PB5 on left side L_MTR_HALL_PHA  (lowest noise input)
+//#define CONTROL_ADC            1         // use ADC as input pn pins PA2 and PA3, cant be used with extbrk on PA2/PA3  
+//#define SW_PWM_RIGHT           0         // Use PWM input capture on PB10 and PB11 (duty cycle mapped to 0 to -16000, 0, 16000)
+//#define SW_PWM_LEFT            0         // Use PWM input capture on PA2 and PA3 (duty cycle mapped to 0 to -16000, 0, 16000)   (cant be use with extbrk on PA2/PA3)
+//#define CONTROL_PPM_LEFT       0         // use PPM-Sum as input on the LEFT cable. Number indicates priority for dual-input. Disable DEBUG_SERIAL_USART2!
+//#define PPM_NUM_CHANNELS       1         // total number of PPM channels to receive, even if they are not used.
+//#define CONTROL_SERIAL_USART3  0         //  disable if right uart port is used for sw pwm input capture
+//#define FEEDBACK_SERIAL_USART3           //  disable if right uart port is used for sw pwm input capture
+  #define PRI_INPUT1             2, -1000, 0, 1000,   0   //left motor change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
+  #define PRI_INPUT2             2, -1000, 0, 1000,   0   //right motor change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
 
   #undef RATE
   #undef FILTER 
-  #define RATE                   32767 
-  #define FILTER                 65535
+   #define RATE                   32767     //leave to max rate 32767 if you want instant response (may be needed if you need slower response)                 
+  #define FILTER                 65535      //leave to max filter 65535 if you want instant response (may be needed if input is noisy)
   #define INVERT_R_DIRECTION
   //#define INVERT_L_DIRECTION
   //#define DEBUG_SERIAL_USART3         // left sensor cable debug
