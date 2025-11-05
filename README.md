@@ -206,15 +206,6 @@ Dual motor control with encoders on both motors - default setup is for ffb joyst
 ```
 ---
 
-### Flash the Firmware
-
-- Discoconnect psu from driver
-- Unlock and erase MCU if first time flashing see [Instructions](https://github.com/EFeru/hoverboard-firmware-hack-FOC/wiki/How-to-Unlock-MCU-Flash)
-- Create fork and modify the Battery Configuration at least for your supply voltage. 
-- Github will build, click Actions, latest workflow run and when its done building you will be able to download a zip which contains a bin file, flash that with stlink utility
-- Alternatively open project in vscode, change what you need and upload from there
----
-
 ## Wiring Guide
 For the reverse-engineered schematics of the mainboard, see [Schematic](/docs/20150722_hoverboard_sch.pdf)
 ![mainboard_pinout](/docs/pictures/mainboard_pinout.png)
@@ -254,6 +245,15 @@ Typically, the mainboard brain is an [STM32F103RCT6](/docs/literature/[10]_STM32
 **Software PWM (`SW_PWM_RIGHT`):**
 - Right sideboard port pins PB10 and PB11 (5V tolerant)
 - Left sideboard port pins PA2 and PA3 (Not 5V tolerant)
+---
+
+### Flash the Firmware
+
+- Discoconnect psu from driver
+- Unlock and erase MCU if first time flashing see [Instructions](https://github.com/EFeru/hoverboard-firmware-hack-FOC/wiki/How-to-Unlock-MCU-Flash)
+- Create fork and modify the Battery Configuration at least for your supply voltage. 
+- Github will build, click Actions, latest workflow run and when its done building you will be able to download a zip which contains a bin file, flash that with stlink utility
+- Alternatively open project in vscode, change what you need and upload from there
 ---
 
 ## Troubleshooting
