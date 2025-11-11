@@ -33,9 +33,9 @@ For information on all improvments see [Pull Request #3](https://github.com/SiMa
 ---
 
 ## My Use Case: Direct Drive FFB Wheelbase, FFB Joystick, Seatbelt Tensioner, Rudder Pedals
-Wheelbase and Joystick project [Arduino-FFB-wheel](https://github.com/ranenbg/Arduino-FFB-wheel)  by Ranenbg
+Wheelbase and Joystick project [Arduino-FFB-wheel](https://github.com/ranenbg/Arduino-FFB-wheel)  by Miloš Ranković
 
-Wheelbase compatible project [OpenFFB](https://github.com/Ultrawipf/OpenFFBoard)  by UltraWipf 
+Wheelbase compatible project [OpenFFB](https://github.com/Ultrawipf/OpenFFBoard)  by Yannick Richter 
 
 Any usb controller capable of outputting PWM and Reading ab encoder signals will work, in this case I am using Ranenbs's firmware with arduino pro micro.
 For exact wiring connections and components to get check wiki [page](https://github.com/SiMachines/hoverboard-firmware-hack-FOC/wiki/Setup-Arduino%E2%80%90FFB%E2%80%90wheel-(Single-Axis))
