@@ -695,7 +695,7 @@
 #undef DP
 #undef DI
 ////////////////////////////////////////
-#define ESTOP_REQUIRE_HOLD           // Require the button to stay pressed for the estop to remain active (default when no button type defined).
+//#define ESTOP_REQUIRE_HOLD           // Require the button to stay pressed for the estop to remain active
 #define ESTOP_ENABLE                //ESTOP functionality enabled
 #define GD32F103Rx              1   // define if you are using a GD32F103Rx MCU to set system clock to 108MHz  
 #define HOCP                        // Tie PA6/PB12 hardware over-current signals into TIM1/TIM8 break inputs
@@ -965,7 +965,7 @@
 // #define ESTOP_ENABLE                 // Enable discrete e-stop input on PA3 (shared with EXTBRK_USE_CH4). Comment out to disable.
 // #define ESTOP_BUTTON_NO              // Normally Open (active low). Press once to latch until the next press.
 // #define ESTOP_BUTTON_NC              // Normally Closed (active high). Do not define together with ESTOP_BUTTON_NO.
-// #define ESTOP_REQUIRE_HOLD           // Require the button to stay pressed for the estop to remain active (default when no button type defined).
+// #define ESTOP_REQUIRE_HOLD           // Require the button to stay pressed for the estop to remain active.
 #ifdef ESTOP_ENABLE
   #if defined(ESTOP_BUTTON_NO) && defined(ESTOP_BUTTON_NC)
     #error "Define only one of ESTOP_BUTTON_NO or ESTOP_BUTTON_NC"

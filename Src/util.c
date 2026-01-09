@@ -923,7 +923,7 @@ void Encoder_Y_Init(void) {
     // Channel A
     GPIO_InitStruct.Pin = ENCODER_Y_CHA_PIN;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_INPUT;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(ENCODER_Y_CHA_PORT, &GPIO_InitStruct);
 
     // Channel B
