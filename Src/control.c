@@ -277,10 +277,10 @@ void calc_sw_pwm_ch1(void){
   sw_pwm_ready_ch1=0;
 if (pwm_period_ch1 > 1 && pwm_period_ch1 < 50000u && duty_ticks_ch1 <= pwm_period_ch1) {
       // Fixed: proper calculation with parentheses for order of operations  
-       duty_cycle_pct_ch1 = (duty_ticks_ch1 * 32000u) / pwm_period_ch1;
+       duty_cycle_pct_ch1 = (duty_ticks_ch1 * 65535u) / pwm_period_ch1;
       // Only update if value is reasonable (prevent glitches)
-      if (duty_cycle_pct_ch1 <= 32000u) {
-        pwm_captured_ch1_value = duty_cycle_pct_ch1 - 16000u;
+      if (duty_cycle_pct_ch1 <= 65535u) {
+        pwm_captured_ch1_value = duty_cycle_pct_ch1 - 32768u;
         // Reset timeouts on valid signal
         timeoutCntGen = 0;
         timeoutFlgGen = 0;
@@ -310,10 +310,10 @@ void calc_sw_pwm_ch2(void){
   sw_pwm_ready_ch2=0;
   if (pwm_period_ch2 > 1 && pwm_period_ch2 < 50000u && duty_ticks_ch2 <= pwm_period_ch2) {
       // Calculate duty cycle percentage
-     duty_cycle_pct_ch2 = (duty_ticks_ch2 * 32000u) / pwm_period_ch2;
+     duty_cycle_pct_ch2 = (duty_ticks_ch2 * 65535u) / pwm_period_ch2;
       // Only update if value is reasonable (prevent glitches)
-      if (duty_cycle_pct_ch2 <= 32000u) {
-        pwm_captured_ch2_value = duty_cycle_pct_ch2 - 16000u;
+      if (duty_cycle_pct_ch2 <= 65535u) {
+        pwm_captured_ch2_value = duty_cycle_pct_ch2 - 32768u;
         // Reset timeouts on valid signal
         timeoutCntGen = 0;
         timeoutFlgGen = 0;
@@ -390,8 +390,8 @@ TIM_HandleTypeDef TimHandle_PWM;
 uint32_t period_ticks = 0;
 uint32_t duty_ticks = 0;
 uint32_t duty_scaled = 0;
-int32_t pwm_captured_ch1_value = 0;
-int32_t pwm_captured_ch2_value = 0;
+int16_t pwm_captured_ch1_value = 0;
+int16_t pwm_captured_ch2_value = 0;
 uint32_t pwm_timeout_ch1 = 0;
 uint32_t pwm_timeout_ch2 = 0;
 
@@ -418,8 +418,8 @@ void calc_hw_pwm(void){
       if (duty_ticks > period_ticks) {
         duty_ticks = period_ticks;
       }
-        duty_scaled = (duty_ticks * 32000u) / period_ticks;
-        pwm_captured_ch2_value = duty_scaled - 16000u; 
+        duty_scaled = (duty_ticks * 65535u) / period_ticks;
+        pwm_captured_ch2_value = duty_scaled - 32768u; 
         #ifdef HSPWM             
         HS_PWM = -pwm_captured_ch2_value;
         #endif

@@ -740,7 +740,7 @@
 #define INACTIVITY_TIMEOUT       100            // [s] Time of inactivity after which hoverboard shuts off
 // Limitation settings
 #define I_MOT_MAX                15              // [A] Maximum single motor current limit
-#define I_DC_MAX                 15              // [A] Maximum stage2 DC Link current limit (Above this value, current chopping is applied. To avoid this make sure that I_DC_MAX = I_MOT_MAX + 2A)
+#define I_DC_MAX                 17              // [A] Maximum stage2 DC Link current limit (Above this value, current chopping is applied. To avoid this make sure that I_DC_MAX = I_MOT_MAX + 2A)
 #define N_MOT_MAX                1900            // [rpm] Maximum motor speed limit
 
 
@@ -755,8 +755,8 @@
 //#define PPM_NUM_CHANNELS       1         // total number of PPM channels to receive, even if they are not used.
 //#define CONTROL_SERIAL_USART3  0         // left sensor board cable, disable if ADC or PPM is used! For Arduino control check the hoverSerial.ino
 //#define FEEDBACK_SERIAL_USART3           // left sensor board cable, disable if ADC or PPM is used!
-  #define PRI_INPUT1             0, -16000, 0, 16000,   0    //change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
-  #define PRI_INPUT2             2, -16000, 0, 16000,   0    //change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
+  #define PRI_INPUT1             0, -32767, 0, 32767,   0    //change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
+  #define PRI_INPUT2             2, -32767, 0, 32767,   0    //change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
   #define RATE                   32767     //leave to max rate 32767 if you want instant response  (may be needed if you need slower response)                  
   #define FILTER                 65535     //leave to max filter 65535 if you want instant response (may be needed if input is noisy)
   //#define INVERT_R_DIRECTION             //invert right motor direction
@@ -848,8 +848,8 @@
 //#define PPM_NUM_CHANNELS       1         // total number of PPM channels to receive, even if they are not used.
 //#define CONTROL_SERIAL_USART3  0         //  disable if right uart port is used for sw pwm input capture
 //#define FEEDBACK_SERIAL_USART3           //  disable if right uart port is used for sw pwm input capture
-  #define PRI_INPUT1             2, -1000, 0, 1000,   0   //left motor change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
-  #define PRI_INPUT2             2, -1000, 0, 1000,   0   //right motor change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
+  #define PRI_INPUT1             2, -32767, 0, 32767,   0   //left motor change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
+  #define PRI_INPUT2             2, -32767, 0, 32767,   0   //right motor change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
 
   #undef RATE
   #undef FILTER 
