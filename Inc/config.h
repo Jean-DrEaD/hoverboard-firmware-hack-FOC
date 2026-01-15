@@ -697,7 +697,7 @@
 ////////////////////////////////////////
 //#define ESTOP_REQUIRE_HOLD           // Require the button to stay pressed for the estop to remain active
 #define ESTOP_ENABLE                //ESTOP functionality enabled
-#define GD32F103Rx              1   // define if you are using a GD32F103Rx MCU to set system clock to 108MHz  
+#define GD32F103Rx                  // define if you are using a GD32F103Rx MCU to set system clock to 108MHz  
 #define HOCP                        // Tie PA6/PB12 hardware over-current signals into TIM1/TIM8 break inputs
 #define BEEPER_OFF                  //use led as beeper
 #define ENCODER_X                   //enable X encoder to right motor
@@ -937,7 +937,11 @@
   #if DC_LINK_OVERVOLTAGE_HIGH_COUNTS > 4095
     #error "DC_LINK_OVERVOLTAGE_HIGH_X100 maps beyond 12-bit ADC range"
   #endif
-
+#ifdef GD32F103Rx
+  #define mcu_model  1
+  #elif
+  #define mcu_model  0
+#endif  
 //#if DC_LINK_OVERVOLTAGE_LOW_COUNTS >= DC_LINK_OVERVOLTAGE_HIGH_COUNTS
  //   #error "DC_LINK_OVERVOLTAGE_LOW_X100 must map below the overvoltage high threshold"
  // #endif
