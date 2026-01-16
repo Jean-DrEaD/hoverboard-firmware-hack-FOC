@@ -937,9 +937,10 @@
   #if DC_LINK_OVERVOLTAGE_HIGH_COUNTS > 4095
     #error "DC_LINK_OVERVOLTAGE_HIGH_X100 maps beyond 12-bit ADC range"
   #endif
+
 #ifdef GD32F103Rx
   #define mcu_model  1
-  #elif
+  #else
   #define mcu_model  0
 #endif  
 //#if DC_LINK_OVERVOLTAGE_LOW_COUNTS >= DC_LINK_OVERVOLTAGE_HIGH_COUNTS
