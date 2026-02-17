@@ -7,6 +7,7 @@ integration tweaks. This script re-applies those tweaks automatically.
 
 What it fixes (idempotent):
 - Adds RT_MODEL::defaultParam in Inc/BLDC_controller.h (if missing)
+- Ensures Inc/BLDC_controller.h includes config.h when mcu_model is not yet defined
 - Comments out global "extern P rtP;" declaration (we use per-instance params)
 - Ensures BLDC_controller_step() / BLDC_controller_initialize() define a local
     param pointer:
@@ -54,6 +55,21 @@ def _write_text(path: Path, text: str) -> None:
 def _patch_header(text: str) -> tuple[str, list[str]]:
     details: list[str] = []
     newline = _detect_newline(text)
+
+    # Ensure generated header can resolve mcu_model regardless of include order.
+    guarded_include = f"#ifndef mcu_model{newline}#include \"config.h\"{newline}#endif"
+    if guarded_include not in text:
+        include_block_re = re.compile(
+            r"(#ifndef\s+BLDC_controller_COMMON_INCLUDES_\s*\r?\n"
+            r"#define\s+BLDC_controller_COMMON_INCLUDES_\s*\r?\n"
+            r"#include\s+\"rtwtypes\.h\"\s*\r?\n)",
+            flags=re.MULTILINE,
+        )
+        m_inc = include_block_re.search(text)
+        if not m_inc:
+            raise RuntimeError("Could not find BLDC_controller_COMMON_INCLUDES_ block in BLDC_controller.h")
+        text = text[: m_inc.end(1)] + guarded_include + newline + text[m_inc.end(1) :]
+        details.append("added guarded include for config.h (mcu_model)")
 
     # Ensure RT_MODEL has defaultParam pointer
     if "P *defaultParam;" not in text:

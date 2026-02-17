@@ -177,7 +177,7 @@
 #define DCR_HIGH_COUNTS  (2000 + (I_DCR_POS * A2BIT_CONV))  // compile-time right high threshold in ADC counts (nominal offset 2000)
 #define DCR_LOW_COUNTS   (2000 - (I_DCR_NEG * A2BIT_CONV))  // compile-time right low threshold in ADC counts (nominal offset 2000)
 #define N_MOT_MAX       1000             // [rpm] Maximum motor speed limit
-#define N_POLE_PAIRS    5                //[PP] Number of motor pole pairs: 15 for standard Hoverboard motors
+#define N_POLE_PAIRS    6                //[PP] Number of motor pole pairs: 15 for standard Hoverboard motors
 
 // Field Weakening / Phase Advance
 #define FIELD_WEAK_ENA  0               // [-] Field Weakening / Phase Advance enable flag: 0 = Disabled (default), 1 = Enabled
@@ -199,6 +199,27 @@
 #define QaI              (float)(QI/(PWM_FREQ/3.0f))      //Integrator scaling//                     
 #define DaI              (float)(DI/(PWM_FREQ/3.0f))      //Integrator scaling//  
 ///End of Dont touch
+
+/* BLDC gain parameter bridge (fixed-point model)
+ * Compile-time conversion from float tuning values to fixed-point parameters.
+ */
+
+/* Compile-time float -> fixed-point conversion helpers */
+#define FIXDT_ROUND_TO_INT(x)        ((int32_t)(((x) >= 0.0f) ? ((x) + 0.5f) : ((x) - 0.5f)))
+#define FIXDT_FROM_FLOAT(x, frac)    FIXDT_ROUND_TO_INT((x) * (float)(1U << (frac)))
+#define FIXDT_CLAMP_U16(x)           ((uint16_t)(((x) < 0) ? 0 : (((x) > 65535) ? 65535 : (x))))
+
+/* Gain values pre-scaled for fixed-point model parameters */
+#define QP_FIXDT_12                  FIXDT_CLAMP_U16(FIXDT_FROM_FLOAT(QP, 12))
+#define DP_FIXDT_12                  FIXDT_CLAMP_U16(FIXDT_FROM_FLOAT(DP, 12))
+#define QaI_FIXDT_16                 FIXDT_CLAMP_U16(FIXDT_FROM_FLOAT(QaI, 16))
+#define DaI_FIXDT_16                 FIXDT_CLAMP_U16(FIXDT_FROM_FLOAT(DaI, 16))
+
+/* Unified gain macros used by BLDC_Init() */
+#define CFG_CF_IDKI                  DaI_FIXDT_16
+#define CFG_CF_IDKP                  DP_FIXDT_12
+#define CFG_CF_IQKI                  QaI_FIXDT_16
+#define CFG_CF_IQKP                  QP_FIXDT_12
 
 //#define BEEPER_OFF
 //#define ENCODER_X
@@ -728,7 +749,7 @@
 
 #if defined (INTBRK_L_EN) || defined (EXTBRK_EN)
 
-  #define BRAKE_RESISTANCE 300                // [Ohm]3ohm X100 Value of the braking resistor. Set it to your own brake resistor resistance, increase the resistance here a bit for example I use 2.2ohm but I set to 3ohm here to be safe. 
+  #define BRAKE_RESISTANCE 250                // [Ohm]3ohm X100 Value of the braking resistor. Set it to your own brake resistor resistance, increase the resistance here a bit for example I use 2.2ohm but I set to 3ohm here to be safe. 
   #define BRKRESACT_SENS    40 / 20           //[A]40mA  Brake resistor activation sensitivity. Set same as MAX_REGEN_CURRENT if using battery. If using psu set 40mA-60mA. 
   #define MAX_REGEN_CURRENT 0 / 20            // [A]0mA  Maximum regenerative current that can be dissipated in the PSU or BATTERY. Set in 20mA steps 0, 20, 40, 60, 80, 100 etc. Set 0 for PSU!
 
@@ -756,7 +777,7 @@
 #define INACTIVITY_TIMEOUT       100            // [s] Time of inactivity after which hoverboard shuts off
 // Limitation settings
 #define I_MOT_MAX                10              // [A] Maximum single motor current limit
-#define I_DC_MAX                 15              // [A] Maximum stage2 DC Link current limit (Above this value, current chopping is applied. To avoid this make sure that I_DC_MAX = I_MOT_MAX + 2A)
+#define I_DC_MAX                 13              // [A] Maximum stage2 DC Link current limit (Above this value, current chopping is applied. To avoid this make sure that I_DC_MAX = I_MOT_MAX + 2A)
 #define N_MOT_MAX                1900            // [rpm] Maximum motor speed limit
 
 

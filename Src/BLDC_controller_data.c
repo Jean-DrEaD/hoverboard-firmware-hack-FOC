@@ -3,12 +3,12 @@
  *
  * Code generated for Simulink model 'BLDC_controller'.
  *
- * Model version                  : 16.10
+ * Model version                  : 16.32
  * Simulink Coder version         : 25.1 (R2025a) 21-Nov-2024
- * C/C++ source code generated on : Thu Jan 15 23:25:51 2026
+ * C/C++ source code generated on : Mon Feb 16 22:38:23 2026
  *
  * Target selection: ert.tlc
- * Embedded hardware selection: ARM Compatible->ARM Cortex
+ * Embedded hardware selection: ARM Compatible->ARM Cortex-M
  * Emulation hardware selection:
  *    Differs from embedded hardware (MATLAB Host)
  * Code generation objective: Execution efficiency
@@ -23,26 +23,6 @@ P rtP_Left = {
    * Referenced by: '<S37>/dV_openRate'
    */
   12288,
-
-  /* Variable: cf_idKi
-   * Referenced by: '<S66>/cf_idKi2'
-   */
-  0.075F,
-
-  /* Variable: cf_idKp
-   * Referenced by: '<S66>/cf_idKp2'
-   */
-  0.6F,
-
-  /* Variable: cf_iqKi
-   * Referenced by: '<S65>/cf_iqKi1'
-   */
-  0.075F,
-
-  /* Variable: cf_iqKp
-   * Referenced by: '<S65>/cf_iqKp1'
-   */
-  0.6F,
 
   /* Variable: dz_cntTrnsDetHi
    * Referenced by: '<S17>/dz_cntTrnsDet'
@@ -109,7 +89,7 @@ P rtP_Left = {
   /* Variable: n_max
    * Referenced by:
    *   '<S36>/n_max'
-   *   '<S189>/n_max1'
+   *   '<S189>/n_max'
    */
   31200,
 
@@ -140,6 +120,16 @@ P rtP_Left = {
    */
   768U,
 
+  /* Variable: cf_idKp
+   * Referenced by: '<S66>/cf_idKp2'
+   */
+  2458U,
+
+  /* Variable: cf_iqKp
+   * Referenced by: '<S65>/cf_iqKp1'
+   */
+  2458U,
+
   /* Variable: cf_nKp
    * Referenced by: '<S64>/cf_nKp'
    */
@@ -149,6 +139,16 @@ P rtP_Left = {
    * Referenced by: '<S53>/cf_currFilt'
    */
   7864U,
+
+  /* Variable: cf_idKi
+   * Referenced by: '<S66>/cf_idKi2'
+   */
+  4915U,
+
+  /* Variable: cf_iqKi
+   * Referenced by: '<S65>/cf_iqKi1'
+   */
+  4915U,
 
   /* Variable: cf_iqKiLimProt
    * Referenced by:
@@ -189,7 +189,7 @@ P rtP_Left = {
    *   '<S3>/b_angleMeasEna'
    *   '<S13>/b_angleMeasEna'
    */
-  false,
+  true,
 
   /* Variable: b_cruiseCtrlEna
    * Referenced by: '<S1>/b_cruiseCtrlEna'
@@ -199,7 +199,7 @@ P rtP_Left = {
   /* Variable: b_diagEna
    * Referenced by: '<S4>/b_diagEna'
    */
-  false,
+  true,
 
   /* Variable: b_fieldWeakEna
    * Referenced by:
@@ -336,95 +336,30 @@ const ConstP rtConstP = {
 
 #if mcu_model == 1
 
-  /* Computed Parameter: GD32_Vq_max_M1_Table
+  /* Computed Parameter: GD32_Vq_max_M1_1_Table
    * Referenced by: '<S198>/GD32_Vq_max_M1'
    */
-  { 25392, 25390, 25384, 25374, 25360, 25342, 25319, 25293, 25263, 25228, 25190,
-    25147, 25100, 25049, 24994, 24934, 24870, 24802, 24730, 24653, 24572, 24487,
-    24397, 24302, 24203, 24099, 23990, 23877, 23759, 23635, 23507, 23374, 23236,
-    23092, 22943, 22788, 22628, 22463, 22291, 22113, 21930, 21740, 21543, 21340,
-    21131, 20914, 20690, 20459, 20219, 19972, 19717, 19453, 19180, 18897, 18605,
-    18303, 17990, 17665, 17329, 16979, 16617, 16240, 15847, 15438, 15011, 14564,
-    14096, 13604, 13086, 12539, 11958, 11338, 10673, 9953, 9166, 8292, 7300,
-    6134, 4664, 2382 },
+  { 24592, 24590, 24584, 24573, 24559, 24540, 24517, 24490, 24458, 24423, 24383,
+    24339, 24290, 24238, 24180, 24119, 24053, 23983, 23908, 23829, 23745, 23656,
+    23563, 23465, 23362, 23254, 23142, 23024, 22902, 22774, 22641, 22502, 22359,
+    22209, 22054, 21894, 21727, 21554, 21375, 21190, 20998, 20800, 20594, 20382,
+    20162, 19935, 19700, 19457, 19205, 18945, 18675, 18396, 18107, 17808, 17498,
+    17176, 16842, 16495, 16134, 15758, 15366, 14958, 14531, 14083, 13614, 13120,
+    12598, 12045, 11457, 10828, 10149, 9411, 8598, 7686, 6635, 5363, 3647 },
 
 #endif
 
 #if mcu_model == 0
 
-  /* Computed Parameter: STM32_Vq_max_M1_Table
+  /* Computed Parameter: STM32_Vq_max_M1_1_Table
    * Referenced by: '<S199>/STM32_Vq_max_M1'
    */
-  { 14400, 14396, 14386, 14368, 14343, 14311, 14271, 14225, 14171, 14109, 14040,
-    13963, 13879, 13786, 13685, 13576, 13459, 13333, 13198, 13053, 12900, 12736,
-    12562, 12377, 12181, 11973, 11753, 11520, 11273, 11011, 10733, 10438, 10124,
-    9790, 9433, 9051, 8640, 8196, 7713, 7184, 6597, 5935, 5170, 4245, 3019, 0 },
+  { 13600, 13596, 13585, 13566, 13540, 13506, 13464, 13414, 13357, 13292, 13218,
+    13137, 13047, 12948, 12841, 12725, 12599, 12465, 12320, 12165, 12000, 11824,
+    11636, 11436, 11224, 10998, 10758, 10503, 10231, 9942, 9633, 9303, 8950,
+    8570, 8160, 7715, 7228, 6691, 6091, 5405, 4596, 3581, 2080 },
 
 #endif
-
-  /* Computed Parameter: uDLookupTable_tableData
-   * Referenced by: '<S17>/1-D Lookup Table'
-   */
-  { 32768U, 3641U, 1928U, 1311U, 993U, 799U, 669U, 575U, 504U, 449U, 405U, 368U,
-    338U, 312U, 290U, 271U, 254U, 239U, 226U, 214U, 204U, 194U, 185U, 177U, 170U,
-    163U, 157U, 151U, 146U, 141U, 136U, 132U, 128U, 124U, 120U, 117U, 113U, 110U,
-    107U, 105U, 102U, 100U, 97U, 95U, 93U, 91U, 89U, 87U, 85U, 83U, 82U, 80U,
-    79U, 77U, 76U, 74U, 73U, 72U, 70U, 69U, 68U, 67U, 66U, 65U, 64U, 63U, 62U,
-    61U, 60U, 59U, 58U, 58U, 57U, 56U, 55U, 55U, 54U, 53U, 52U, 52U, 51U, 50U,
-    50U, 49U, 49U, 48U, 48U, 47U, 46U, 46U, 45U, 45U, 44U, 44U, 44U, 43U, 43U,
-    42U, 42U, 41U, 41U, 41U, 40U, 40U, 39U, 39U, 39U, 38U, 38U, 38U, 37U, 37U,
-    37U, 36U, 36U, 36U, 35U, 35U, 35U, 34U, 34U, 34U, 34U, 33U, 33U, 33U, 32U,
-    32U, 32U, 32U, 31U, 31U, 31U, 31U, 31U, 30U, 30U, 30U, 30U, 29U, 29U, 29U,
-    29U, 29U, 28U, 28U, 28U, 28U, 28U, 27U, 27U, 27U, 27U, 27U, 27U, 26U, 26U,
-    26U, 26U, 26U, 26U, 25U, 25U, 25U, 25U, 25U, 25U, 25U, 24U, 24U, 24U, 24U,
-    24U, 24U, 24U, 23U, 23U, 23U, 23U, 23U, 23U, 23U, 22U, 22U, 22U, 22U, 22U,
-    22U, 22U, 22U, 22U, 21U, 21U, 21U, 21U, 21U, 21U, 21U, 21U, 21U, 20U, 20U,
-    20U, 20U, 20U, 20U, 20U, 20U, 20U, 20U, 19U, 19U, 19U, 19U, 19U, 19U, 19U,
-    19U, 19U, 19U, 19U, 19U, 18U, 18U, 18U, 18U, 18U, 18U, 18U, 18U, 18U, 18U,
-    18U, 18U, 17U, 17U, 17U, 17U, 17U, 17U, 17U, 17U, 17U, 17U, 17U, 17U, 17U,
-    17U, 17U, 16U, 16U, 16U, 16U, 16U, 16U, 16U, 16U, 16U, 16U, 16U, 16U, 16U,
-    16U, 16U, 16U, 15U, 15U, 15U, 15U, 15U, 15U, 15U, 15U, 15U, 15U, 15U, 15U,
-    15U, 15U, 15U, 15U, 15U, 15U, 14U, 14U, 14U, 14U, 14U, 14U, 14U, 14U, 14U,
-    14U, 14U, 14U, 14U, 14U, 14U, 14U, 14U, 14U, 14U, 14U, 14U, 13U, 13U, 13U,
-    13U, 13U, 13U, 13U, 13U, 13U, 13U, 13U, 13U, 13U, 13U, 13U, 13U, 13U, 13U,
-    13U, 13U, 13U, 13U, 13U, 13U, 12U, 12U, 12U, 12U, 12U, 12U, 12U, 12U, 12U,
-    12U, 12U, 12U, 12U, 12U, 12U, 12U, 12U, 12U, 12U, 12U, 12U, 12U, 12U, 12U,
-    12U, 12U, 12U, 12U, 12U, 11U, 11U, 11U, 11U, 11U, 11U, 11U, 11U, 11U, 11U,
-    11U, 11U, 11U, 11U, 11U, 11U, 11U, 11U, 11U, 11U, 11U, 11U, 11U, 11U, 11U,
-    11U, 11U, 11U, 11U, 11U, 11U, 11U, 11U, 10U, 10U, 10U, 10U, 10U, 10U, 10U,
-    10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U,
-    10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U, 10U,
-    10U, 10U, 10U, 10U, 10U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U,
-    9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U,
-    9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 9U, 8U,
-    8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U,
-    8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U,
-    8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U, 8U,
-    8U, 8U, 8U, 8U, 8U, 8U, 8U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U,
-    7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U,
-    7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U,
-    7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U,
-    7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 7U, 6U, 6U, 6U, 6U,
-    6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U,
-    6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U,
-    6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U,
-    6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U,
-    6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U,
-    6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 6U, 5U, 5U, 5U, 5U,
-    5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U,
-    5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U,
-    5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U,
-    5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U,
-    5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U,
-    5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U,
-    5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U,
-    5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U,
-    5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 5U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U,
-    4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U,
-    4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U,
-    4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U,
-    4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U, 4U,
-    4U, 4U, 4U, 4U },
 
   /* Computed Parameter: iq_maxSca_M1_Table
    * Referenced by: '<S189>/iq_maxSca_M1'

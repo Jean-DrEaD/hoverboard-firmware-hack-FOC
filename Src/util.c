@@ -477,10 +477,10 @@ void BLDC_Init(void) {
   rtP_Left.r_fieldWeakHi        = FIELD_WEAK_HI << 4;                   // fixdt(1,16,4)
   rtP_Left.r_fieldWeakLo        = FIELD_WEAK_LO << 4;                   // fixdt(1,16,4)
   rtP_Left.n_polePairs          = N_POLE_PAIRS;                        // fixdt(1,16,4)
-  rtP_Left.cf_idKi              = DaI;                             // Single
-  rtP_Left.cf_idKp              = DP;                              
-  rtP_Left.cf_iqKi              = QaI;                              
-  rtP_Left.cf_iqKp              = QP;                              
+  rtP_Left.cf_idKi              = CFG_CF_IDKI;
+  rtP_Left.cf_idKp              = CFG_CF_IDKP;
+  rtP_Left.cf_iqKi              = CFG_CF_IQKI;
+  rtP_Left.cf_iqKp              = CFG_CF_IQKP;
 
   rtP_Right                     = rtP_Left;     // Copy the Left motor parameters to the Right motor parameters
   rtP_Right.z_selPhaCurMeasABC  = 1;            // Right motor measured current phases {Green, Blue} = {iA, iB} -> do NOT change
@@ -666,6 +666,26 @@ void UART_DisableRxErrors(UART_HandleTypeDef *huart)
 /* =========================== Encoder Functions =========================== */
 #if defined (ENCODER_X)
 
+static void Encoder_X_ApplyDirection(boolean_T forward_dir) {
+  TIM_Encoder_InitTypeDef encoder_config;
+
+  encoder_config.EncoderMode = TIM_ENCODERMODE_TI12;
+
+  encoder_config.IC1Polarity = TIM_ICPOLARITY_RISING;
+  encoder_config.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+  encoder_config.IC1Prescaler = TIM_ICPSC_DIV1;
+  encoder_config.IC1Filter = 0;
+
+  encoder_config.IC2Polarity = forward_dir ? TIM_ICPOLARITY_RISING : TIM_ICPOLARITY_FALLING;
+  encoder_config.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+  encoder_config.IC2Prescaler = TIM_ICPSC_DIV1;
+  encoder_config.IC2Filter = 0;
+
+  HAL_TIM_Encoder_Stop(&encoder_x_handle, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Init(&encoder_x_handle, &encoder_config);
+  HAL_TIM_Encoder_Start(&encoder_x_handle, TIM_CHANNEL_ALL);
+}
+
 void Encoder_X_Init(void) {
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_TIM4_CLK_ENABLE();
@@ -728,6 +748,7 @@ void Encoder_X_Init(void) {
   encoder_x.align_state = 0;
   encoder_x.align_ini_pos = 0;
 }
+
 void Encoder_X_Align_Start(void) {
   if (encoder_x.align_state != 0) {
         return; 
@@ -747,15 +768,11 @@ void Encoder_X_Align_Start(void) {
   encoder_x.align_ini_pos = encoder_x_handle.Instance->CNT;
   encoder_x.align_total_ini_pos = get_x_TotalCount();
     // Initialize simulation variables
-  // Calculate count increment for 5.256 electrical rotations in 3000ms (5 + 92°/360°)
-  // This compensates for the electrical offset to naturally reach 0° electrical  
-  // 5.256 electrical rotations = 5.256/N_POLE_PAIRS mechanical rotations = 0.3504 mechanical rotation
-  // 0.3504 mech rotation = (0.3504 * ENCODER_X_CPR) counts over 3000ms
-  // Timebase: buzzerTimer runs at 16 ticks/ms -> total ticks = 3000 * 16 = 48000
-  // Increment per tick = (0.3504 * ENCODER_Y_CPR) / 48000
-  // Store as per-tick * 1000 for precision: (0.3504 * ENCODER_Y_CPR * 1000) / 48000
-  // Using integer math: (3504 * ENCODER_Y_CPR * 1000) / (10000 * 48000) = (3504 * ENCODER_Y_CPR) / 480000
-     encoder_x.count_increment_x1000 = (int32_t)((((int64_t)280) * ENCODER_X_CPR) / 48000);
+  // Target movement: 2.0 electrical rotations during phase-1 move time.
+  // Convert electrical rotations to mechanical counts and then to per-tick increment*1000:
+  // count_increment_x1000 = (ENCODER_X_CPR * 2.0) / (N_POLE_PAIRS * MOVE_TICKS)
+  // where MOVE_TICKS = T_MS(1500).
+  encoder_x.count_increment_x1000 = (int32_t)((((int64_t)ENCODER_X_CPR) * 2000) / (((int64_t)N_POLE_PAIRS) * T_MS(1500)));
     encoder_x.align_inpTgt = 0; // Start with 0 power, will ramp up
 }
 
@@ -811,10 +828,14 @@ void Encoder_X_Align(void) {
     } else {
         // Rotation complete - snap to 0° electrical position
         int32_t counts_per_elec_cycle = ENCODER_X_CPR / N_POLE_PAIRS;
-         encoder_x.offset = (ENCODER_X_CPR / N_POLE_PAIRS/4); //90 degrees offset
+         encoder_x.offset = (ENCODER_X_CPR / N_POLE_PAIRS / 4); //90 degrees offset
 
-        int32_t current_elec_cycle = encoder_x.emulated_mech_count / counts_per_elec_cycle;
-        encoder_x.emulated_mech_count = current_elec_cycle * counts_per_elec_cycle;
+      int32_t delta_from_start = encoder_x.emulated_mech_count - encoder_x.align_ini_pos;
+      if (delta_from_start < 0) {
+        delta_from_start += ENCODER_X_CPR;
+      }
+      int32_t current_elec_cycle = (delta_from_start + (counts_per_elec_cycle / 2)) / counts_per_elec_cycle;
+      encoder_x.emulated_mech_count = encoder_x.align_ini_pos + (current_elec_cycle * counts_per_elec_cycle);
         encoder_x.emulated_mech_count = normalize_x_encoder_count(encoder_x.emulated_mech_count);
         encoder_x.align_state = 2;
         encoder_x.align_start_time = current_time;
@@ -829,10 +850,17 @@ void Encoder_X_Align(void) {
         // Hold at double power
         encoder_x.align_inpTgt = ALIGNMENT_X_POWER * 2;
     } else {
-       
-        __HAL_TIM_SET_COUNTER(&encoder_x_handle, encoder_x.emulated_mech_count+encoder_x.offset); //+90 degree offset align to Q axis
+      int32_t seed_count;
+      encoder_x.align_total_mid_pos = get_x_TotalCount();
+      encoder_x.direction = (encoder_x.align_total_mid_pos >= encoder_x.align_total_ini_pos) ? 1 : 0;
+
+      seed_count = normalize_x_encoder_count(encoder_x.emulated_mech_count - encoder_x.offset); // +90 degree offset align to Q axis
+      Encoder_X_ApplyDirection(encoder_x.direction);
+      __HAL_TIM_SET_COUNTER(&encoder_x_handle, seed_count);
+      encoder_x.ENCODER_COUNT = seed_count;
+      encoder_x.count_prev = seed_count;
+      encoder_x.full_rotations = 0;
         encoder_x.align_zero_pos = encoder_x.emulated_mech_count;
-        encoder_x.align_total_mid_pos = get_x_TotalCount();
         encoder_x.align_start_time = current_time;
         encoder_x.align_state = 3;
     }
@@ -889,7 +917,7 @@ return encoder_x.full_rotations * ENCODER_X_CPR + encoder_x.count_prev;
 
  void finalize_x_alignment(void) {
          // Calculate direction
-       int32_t MIN_MOVMENT = (ENCODER_X_CPR / 15) * 1;
+       int32_t MIN_MOVMENT = (ENCODER_X_CPR / N_POLE_PAIRS) * 1;
         encoder_x.align_total_end_pos = get_x_TotalCount();
        int32_t movement =  abs(encoder_x.align_total_mid_pos - encoder_x.align_total_ini_pos);
        
@@ -897,14 +925,7 @@ return encoder_x.full_rotations * ENCODER_X_CPR + encoder_x.count_prev;
         encoder_x.align_fault = true;
         encoder_x.ali = false;
         encoder_x.align_state = 0;
-       } else if(encoder_x.align_total_mid_pos < encoder_x.align_total_end_pos) {
-         encoder_x.direction = 0;
-        encoder_x.align_fault = false;
-        encoder_x.ali = true;
-        rtP_Right.b_diagEna = DIAG_ENA;
-        encoder_x.align_state = 0;
-       }else{
-        encoder_x.direction = 1;
+       } else {
         encoder_x.align_fault = false;
         encoder_x.ali = true;
         rtP_Right.b_diagEna = DIAG_ENA;
@@ -914,6 +935,27 @@ return encoder_x.full_rotations * ENCODER_X_CPR + encoder_x.count_prev;
 #endif // ENCODER_X
 
 #if defined (ENCODER_Y)
+
+static void Encoder_Y_ApplyDirection(boolean_T forward_dir) {
+  TIM_Encoder_InitTypeDef encoder_config;
+
+  encoder_config.EncoderMode = TIM_ENCODERMODE_TI12;
+
+  encoder_config.IC1Polarity = TIM_ICPOLARITY_RISING;
+  encoder_config.IC1Selection = TIM_ICSELECTION_DIRECTTI;
+  encoder_config.IC1Prescaler = TIM_ICPSC_DIV1;
+  encoder_config.IC1Filter = 0;
+
+  encoder_config.IC2Polarity = forward_dir ? TIM_ICPOLARITY_RISING : TIM_ICPOLARITY_FALLING;
+  encoder_config.IC2Selection = TIM_ICSELECTION_DIRECTTI;
+  encoder_config.IC2Prescaler = TIM_ICPSC_DIV1;
+  encoder_config.IC2Filter = 0;
+
+  HAL_TIM_Encoder_Stop(&encoder_y_handle, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Init(&encoder_y_handle, &encoder_config);
+  HAL_TIM_Encoder_Start(&encoder_y_handle, TIM_CHANNEL_ALL);
+}
+
 void Encoder_Y_Init(void) {
     __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_TIM3_CLK_ENABLE();
@@ -998,15 +1040,11 @@ void Encoder_Y_Align_Start(void) {
   encoder_y.align_ini_pos = encoder_y_handle.Instance->CNT;
   encoder_y.align_total_ini_pos = get_y_TotalCount();
     // Initialize simulation variables
-  // Calculate count increment for 5.256 electrical rotations in 3000ms (5 + 92°/360°)
-  // This compensates for the electrical offset to naturally reach 0° electrical  
-  // 5.256 electrical rotations = 5.256/15 mechanical rotations = 0.3504 mechanical rotation
-  // 0.3504 mech rotation = (0.3504 * ENCODER_Y_CPR) counts over 3000ms
-  // Timebase: buzzerTimer runs at 16 ticks/ms -> total ticks = 3000 * 16 = 48000
-  // Increment per tick = (0.3504 * ENCODER_Y_CPR) / 48000
-  // Store as per-tick * 1000 for precision: (0.3504 * ENCODER_Y_CPR * 1000) / 48000
-  // Using integer math: (3504 * ENCODER_Y_CPR * 1000) / (10000 * 48000) = (3504 * ENCODER_Y_CPR) / 480000
-  encoder_y.count_increment_x1000 = (int32_t)((((int64_t)280) * ENCODER_Y_CPR) / 48000);
+  // Target movement: 2.0 electrical rotations during phase-1 move time.
+  // Convert electrical rotations to mechanical counts and then to per-tick increment*1000:
+  // count_increment_x1000 = (ENCODER_Y_CPR * 2.0) / (N_POLE_PAIRS * MOVE_TICKS)
+  // where MOVE_TICKS = T_MS(1500).
+  encoder_y.count_increment_x1000 = (int32_t)((((int64_t)ENCODER_Y_CPR) * 2000) / (((int64_t)N_POLE_PAIRS) * T_MS(1500)));
     encoder_y.align_inpTgt = 0; // Start with 0 power, will ramp up
 }
 
@@ -1062,9 +1100,13 @@ void Encoder_Y_Align(void) {
         // Rotation complete - snap to 0° electrical position
         int32_t counts_per_elec_cycle = ENCODER_Y_CPR / N_POLE_PAIRS;
         encoder_y.offset = (ENCODER_Y_CPR / N_POLE_PAIRS/4);  // 90° electrical
-    
-        int32_t current_elec_cycle = encoder_y.emulated_mech_count / counts_per_elec_cycle;
-        encoder_y.emulated_mech_count = current_elec_cycle * counts_per_elec_cycle;
+
+      int32_t delta_from_start = encoder_y.emulated_mech_count - encoder_y.align_ini_pos;
+      if (delta_from_start < 0) {
+        delta_from_start += ENCODER_Y_CPR;
+      }
+      int32_t current_elec_cycle = (delta_from_start + (counts_per_elec_cycle / 2)) / counts_per_elec_cycle;
+      encoder_y.emulated_mech_count = encoder_y.align_ini_pos + (current_elec_cycle * counts_per_elec_cycle);
         encoder_y.emulated_mech_count = normalize_y_encoder_count(encoder_y.emulated_mech_count);
 
         encoder_y.align_state = 2;
@@ -1081,9 +1123,17 @@ void Encoder_Y_Align(void) {
         encoder_y.align_inpTgt = ALIGNMENT_Y_POWER * 2;
   } else {
     // Record final position and move to next phase
-        __HAL_TIM_SET_COUNTER(&encoder_y_handle, encoder_y.emulated_mech_count + encoder_y.offset);
+      int32_t seed_count;
+      encoder_y.align_total_mid_pos = get_y_TotalCount();
+      encoder_y.direction = (encoder_y.align_total_mid_pos >= encoder_y.align_total_ini_pos) ? 1 : 0;
+
+      seed_count = normalize_y_encoder_count(encoder_y.emulated_mech_count - encoder_y.offset);
+      Encoder_Y_ApplyDirection(encoder_y.direction);
+      __HAL_TIM_SET_COUNTER(&encoder_y_handle, seed_count);
+      encoder_y.ENCODER_COUNT = seed_count;
+      encoder_y.count_prev = seed_count;
+      encoder_y.full_rotations = 0;
         encoder_y.align_zero_pos = encoder_y.emulated_mech_count;
-        encoder_y.align_total_mid_pos = get_y_TotalCount();
         encoder_y.align_start_time = current_time;
         encoder_y.align_state = 3;
     }
@@ -1139,7 +1189,7 @@ return encoder_y.full_rotations * ENCODER_Y_CPR + encoder_y.count_prev;
 
  void finalize_y_alignment(void) {
     // Calculate offset
-       int32_t MIN_MOVMENT = (ENCODER_Y_CPR / 15) * 1;
+       int32_t MIN_MOVMENT = (ENCODER_Y_CPR / N_POLE_PAIRS) * 1;
         encoder_y.align_total_end_pos = get_y_TotalCount();
        int32_t movement =  abs(encoder_y.align_total_mid_pos - encoder_y.align_total_ini_pos);
        
@@ -1147,14 +1197,7 @@ return encoder_y.full_rotations * ENCODER_Y_CPR + encoder_y.count_prev;
         encoder_y.align_fault = true;
         encoder_y.ali = false;
         encoder_y.align_state = 0;
-       } else if(encoder_y.align_total_mid_pos < encoder_y.align_total_end_pos) {
-         encoder_y.direction = 0;
-        encoder_y.align_fault = false;
-        encoder_y.ali = true;
-        rtP_Left.b_diagEna = DIAG_ENA;
-        encoder_y.align_state = 0;
-       }else{
-        encoder_y.direction = 1;
+      } else {
         encoder_y.align_fault = false;
         encoder_y.ali = true;
         rtP_Left.b_diagEna = DIAG_ENA;
