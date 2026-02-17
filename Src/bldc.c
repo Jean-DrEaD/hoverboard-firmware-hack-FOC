@@ -70,6 +70,8 @@ uint8_t buzzerCount         = 0;
 volatile uint32_t buzzerTimer = 0;
 static uint8_t  buzzerPrev  = 0;
 static uint8_t  buzzerIdx   = 0;
+static uint8_t  brkResActiveL = 0;
+static uint8_t  brkResActiveExt = 0;
 
 uint8_t        enable       = 0;        // initially motors are disabled for SAFETY
 static uint8_t enableFin    = 0;
@@ -235,11 +237,7 @@ void DMA1_Channel1_IRQHandler(void) {
        
     }
     if (encoder_y.ali){
-     if (encoder_y.direction == 1) {
-      encoder_y.aligned_count = encoder_y_handle.Instance->CNT;
-    }else {
-      encoder_y.aligned_count = ENCODER_Y_CPR - encoder_y_handle.Instance->CNT;
-    }
+    encoder_y.aligned_count = encoder_y_handle.Instance->CNT;
     rtU_Left.a_mechAngle = (encoder_y.aligned_count * 23040) / (uint32_t)ENCODER_Y_CPR;
     // Angle input in DEGREES [0,360] in fixdt(1,16,4) data type. If `angle` is float use `= (int16_t)floor(angle * 16.0F)` If `angle` is integer use `= (int16_t)(angle << 4)`
     } 
@@ -268,12 +266,28 @@ void DMA1_Channel1_IRQHandler(void) {
     LEFT_TIM->LEFT_TIM_V    = (uint16_t)CLAMP(vl + pwm_res / 2, pwm_margin, pwm_res-pwm_margin);
     LEFT_TIM->LEFT_TIM_W    = (uint16_t)CLAMP(wl + pwm_res / 2, pwm_margin, pwm_res-pwm_margin);
     #else
-     
-    if (curR_DC > BRKRESACT_SENS) { // If over max regen current, apply braking on left motor
-      curR_DC -= MAX_REGEN_CURRENT;
-      I_BusR = CLAMP(((((int32_t)curR_DC * BRAKE_RESISTANCE * pwm_res) /(50*batVoltageCalib))) ,0, (((uint32_t)pwm_res*90)/100));
-     LEFT_TIM->LEFT_TIM_U = I_BusR;
-    }else{
+    int16_t regenCur = curR_DC - MAX_REGEN_CURRENT;
+    const int16_t brkOnThresh = BRKRESACT_SENS;
+    const int16_t brkOffThresh = (BRKRESACT_SENS > 1) ? (BRKRESACT_SENS / 2) : 0;
+
+    if (regenCur < 0) {
+      regenCur = 0;
+    }
+
+    if (!brkResActiveL) {
+      if (regenCur > brkOnThresh) {
+        brkResActiveL = 1;
+      }
+    } else {
+      if (regenCur < brkOffThresh) {
+        brkResActiveL = 0;
+      }
+    }
+
+    if (brkResActiveL) {
+      I_BusR = CLAMP(((((int32_t)regenCur * BRAKE_RESISTANCE * pwm_res) /(50*batVoltageCalib))) ,0, (((uint32_t)pwm_res*90)/100));
+      LEFT_TIM->LEFT_TIM_U = I_BusR;
+    } else {
       LEFT_TIM->LEFT_TIM_U = 0;
     }
      
@@ -307,7 +321,7 @@ void DMA1_Channel1_IRQHandler(void) {
      #ifdef ENCODER_X
     if (!encoder_x.align_state) {
       #ifdef HSPWM
-      rtU_Right.r_inpTgt = HS_PWM;
+      rtU_Right.r_inpTgt = HS_PWM;  //~-1ms
       #else
       rtU_Right.r_inpTgt = pwmr;
       #endif
@@ -318,12 +332,7 @@ void DMA1_Channel1_IRQHandler(void) {
       rtU_Right.a_mechAngle = emulated_mech_angle_deg;
     }
     if (encoder_x.ali){
-       
-    if (encoder_x.direction == 1) {
-      encoder_x.aligned_count = encoder_x_handle.Instance->CNT;
-    }else {
-      encoder_x.aligned_count = ENCODER_X_CPR - encoder_x_handle.Instance->CNT;
-    }
+    encoder_x.aligned_count = encoder_x_handle.Instance->CNT;
     rtU_Right.a_mechAngle = (encoder_x.aligned_count * 23040) / (uint32_t)ENCODER_X_CPR;
     } 
     #else
@@ -353,13 +362,31 @@ void DMA1_Channel1_IRQHandler(void) {
 
   //External Break Resistor Output Control
   #ifdef EXTBRK_EN
-  I_BusR = curR_DC + curL_DC - MAX_REGEN_CURRENT; // Total bus current -2000 to +2000 out of +-40A
-  if (I_BusR > BRKRESACT_SENS){ // If over max regen current
-    
-     EXT_PWM_BRK = CLAMP(((((int32_t)I_BusR * BRAKE_RESISTANCE * pwm_res) /(50*batVoltageCalib))) ,0, (((uint32_t)pwm_res*90)/100));
-    }else{
-     EXT_PWM_BRK = 0;
+  int16_t busRegenCur = (curR_DC + curL_DC) - MAX_REGEN_CURRENT; // Total bus regen current in x10 resolution
+  const int16_t brkOnThreshExt = BRKRESACT_SENS;
+  const int16_t brkOffThreshExt = (BRKRESACT_SENS > 1) ? (BRKRESACT_SENS / 2) : 0;
+
+  if (busRegenCur < 0) {
+    busRegenCur = 0;
+  }
+
+  if (!brkResActiveExt) {
+    if (busRegenCur > brkOnThreshExt) {
+      brkResActiveExt = 1;
     }
+  } else {
+    if (busRegenCur < brkOffThreshExt) {
+      brkResActiveExt = 0;
+    }
+  }
+
+  if (brkResActiveExt) {
+    I_BusR = CLAMP(((((int32_t)busRegenCur * BRAKE_RESISTANCE * pwm_res) /(50*batVoltageCalib))) ,0, (((uint32_t)pwm_res*90)/100));
+    EXT_PWM_BRK = I_BusR;
+  } else {
+    EXT_PWM_BRK = 0;
+    I_BusR = 0;
+  }
   #endif
   /* Indicate task complete */
   OverrunFlag = false;
