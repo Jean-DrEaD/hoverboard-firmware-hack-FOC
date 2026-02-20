@@ -1,3 +1,19 @@
+﻿// ============================================================================
+// config.h — Direct-Drive FFB Wheel
+// ============================================================================
+// Baseado no SiMachines hoverboard-firmware-hack-FOC (ONE_AXIS_VARIANT)
+// Customizado para:
+//   Motor:    Lado DIREITO (TIM1) — sem hall sensors originais
+//   Encoder:  MT6701 ABZ 1024 PPR → PB6/PB7 (Hall ESQUERDO, TIM4, ENCODER_X)
+//   Freio:    INTBRK_L_EN — Resistor 10 Ohm 50-100W na Fase U ESQUERDA → GND
+//   Controle: Arduino Pro Micro via USART3 (PB10 TX / PB11 RX) lado DIREITO
+//   Fonte:    24V 15A-30A via XT60 (BAT_CELLS=1)
+//   Motor:    30 ímãs → N_POLE_PAIRS=15
+//   Modo:     FOC + TRQ_MODE
+// ----------------------------------------------------------------------------
+// Capacitores de filtro do Hall ESQUERDO removidos (exigido pelo encoder ABZ)
+// Fio vermelho 15V do conector Hall DIREITO NÃO conectado ao Arduino
+// ============================================================================
 // Define to prevent recursive inclusion
 #ifndef CONFIG_H
 #define CONFIG_H
@@ -163,7 +179,7 @@
 // Control selections
 #define CTRL_TYP_SEL    FOC_CTRL        // [-] Control type selection: COM_CTRL, SIN_CTRL, FOC_CTRL (default)
 #define CTRL_MOD_REQ    TRQ_MODE        // [-] Control mode request: OPEN_MODE, VLT_MODE (default), SPD_MODE, TRQ_MODE. Note: SPD_MODE and TRQ_MODE are only available for CTRL_FOC!
-#define DIAG_ENA        0              // [-] Motor Diagnostics enable flag: 0 = Disabled, 1 = Enabled (default)
+#define DIAG_ENA        1              // [-] Motor Diagnostics enable flag: 0 = Disabled, 1 = Enabled (default)
 
 // Limitation settings
 #define I_MOT_MAX       15              // [A] Maximum single motor current limit
@@ -711,6 +727,7 @@
 #undef I_MOT_MAX
 #undef I_DC_MAX
 #undef FIELD_WEAK_ENA
+#undef N_POLE_PAIRS
 #undef QP
 #undef QI
 #undef DP
@@ -720,7 +737,7 @@
 #define ESTOP_ENABLE                //ESTOP functionality enabled
 #define GD32F103Rx                  // define if you are using a GD32F103Rx MCU to set system clock to 108MHz  
 #define HOCP                        // Tie PA6/PB12 hardware over-current signals into TIM1/TIM8 break inputs
-#define BEEPER_OFF                  //use led as beeper
+//#define BEEPER_OFF                  //use led as beeper
 #define ENCODER_X                   //enable X encoder to right motor
 //#define ENCODER_Y                 //enable Y encoder to left motor
 #define INTBRK_L_EN                 //enable brake resistor control on PHASE A left side driver, do not disable if break reistor is connected 
@@ -730,15 +747,15 @@
 //#define EXTBRK_USE_CH4            // PA3
 #endif
 
-#define BAT_CELLS               12      // battery number of cells. Normal Hoverboard battery: 10s = 36V nominal, 42V full charge. For 36V battery use 10, for 24V use 6, for 48V use 13 etc.
+#define BAT_CELLS               1      // battery number of cells. Normal Hoverboard battery: 10s = 36V nominal, 42V full charge. For 36V battery use 10, for 24V use 6, for 48V use 13 etc.
 
 //Q axis control gains                      
-#define QP              0.6f                                  //[-] P gain
-#define QI              400.0f                                //[-] I gain
+#define QP              0.4f                                  //[-] P gain
+#define QI              10.67f                                //[-] I gain
      
 //D axis control gains
-#define DP              0.6f                                   //[-] P gain   
-#define DI              400.0f                                 //[-] I gain
+#define DP              0.2f                                   //[-] P gain   
+#define DI              5.33f                                 //[-] I gain
 
 
 ///Dont touch
@@ -749,15 +766,15 @@
 
 #if defined (INTBRK_L_EN) || defined (EXTBRK_EN)
 
-  #define BRAKE_RESISTANCE 300                // [Ohm]3ohm X100 Value of the braking resistor. Set it to your own brake resistor resistance, increase the resistance here a bit for example I use 2.2ohm but I set to 3ohm here to be safe. 
-  #define BRKRESACT_SENS    40 / 20           //[A]40mA  Brake resistor activation sensitivity. Set same as MAX_REGEN_CURRENT if using battery. If using psu set 40mA-60mA. 
+  #define BRAKE_RESISTANCE 1000                // [Ohm]3ohm X100 Value of the braking resistor. Set it to your own brake resistor resistance, increase the resistance here a bit for example I use 2.2ohm but I set to 3ohm here to be safe. 
+  #define BRKRESACT_SENS    2           //[A]40mA  Brake resistor activation sensitivity. Set same as MAX_REGEN_CURRENT if using battery. If using psu set 40mA-60mA. 
   #define MAX_REGEN_CURRENT 0 / 20            // [A]0mA  Maximum regenerative current that can be dissipated in the PSU or BATTERY. Set in 20mA steps 0, 20, 40, 60, 80, 100 etc. Set 0 for PSU!
 
 #endif  
 
 #if defined ENCODER_X
-#define ENCODER_X_PPR              16384    // Pulses per revolution
-#define ALIGNMENT_X_POWER        3276      // [-] Voltage used for sensor alignment. [-16000, 16000]
+#define ENCODER_X_PPR              1024    // Pulses per revolution
+#define ALIGNMENT_X_POWER        6553      // [-] Voltage used for sensor alignment. [-16000, 16000]
 #endif
 #if defined ENCODER_Y
 #define ENCODER_Y_PPR            2048        // Pulses per revolution 
@@ -769,36 +786,47 @@
   #define CTRL_TYP_SEL           FOC_CTRL   
   #define CTRL_MOD_REQ           TRQ_MODE  
   
-#define TANK_STEERING                    // Each input controls each wheel
-#define HSPWM                             //Bypass PWM post proccessing for faster response
+//#define TANK_STEERING                    // Each input controls each wheel
+//#define HSPWM                             //Bypass PWM post proccessing for faster response
 //#define MOTOR_LEFT_ENA                  //  Enable LEFT motor.  Keeping left motor disabled. This is important for breaking resistor control if connected to left side driver in place of the motor
 #define MOTOR_RIGHT_ENA                 //  Enable RIGHT motor. Comment-out if this motor is not needed to be operational                        
-#define DIAG_ENA                 0               // [-] disable diag if using motor at stall
-#define INACTIVITY_TIMEOUT       100            // [s] Time of inactivity after which hoverboard shuts off
+#define DIAG_ENA                 1               // [-] disable diag if using motor at stall
+#define INACTIVITY_TIMEOUT       0            // [s] Time of inactivity after which hoverboard shuts off
 // Limitation settings
-#define I_MOT_MAX                10              // [A] Maximum single motor current limit
-#define I_DC_MAX                 13              // [A] Maximum stage2 DC Link current limit (Above this value, current chopping is applied. To avoid this make sure that I_DC_MAX = I_MOT_MAX + 2A)
-#define N_MOT_MAX                1900            // [rpm] Maximum motor speed limit
+#define I_MOT_MAX                15              // [A] Maximum single motor current limit
+#define I_DC_MAX                 17              // [A] Maximum stage2 DC Link current limit (Above this value, current chopping is applied. To avoid this make sure that I_DC_MAX = I_MOT_MAX + 2A)
+#define N_MOT_MAX                200            // [rpm] Maximum motor speed limit
+#define N_POLE_PAIRS             15              // 30 imas / 2 = 15 pole pairs
 
 
-#define DC_LINK_WATCHDOG_ENABLE               //Disables the motor without warning incase of under or overvoltage, disable if using hoverboard as vehicle
+//#define DC_LINK_WATCHDOG_ENABLE               //Disables the motor without warning incase of under or overvoltage, disable if using hoverboard as vehicle
 #define FIELD_WEAK_ENA           0         //0 for disabled
 //#define RC_PWM_RIGHT           0         // Use RC PWM as input on the RIGHT cable. (duty cycle mapped to 0 to -1000, 0, 1000) Number indicates priority for dual-input. Disable DEBUG_SERIAL_USART3!
-#define HW_PWM                   0         // Set to 0 or 1 depending on which motor you want to control also Use hw pwm pin PB5 on left side L_MTR_HALL_PHA  or could also be L_MTR_HALL_PHC 
+//#define HW_PWM                   0         // Set to 0 or 1 depending on which motor you want to control also Use hw pwm pin PB5 on left side L_MTR_HALL_PHA  or could also be L_MTR_HALL_PHC 
 //#define CONTROL_ADC            1         // use ADC as input pn pins PA2 and PA3, cant be used with extbrk on PA2/PA3  
 //#define SW_PWM_RIGHT           0         // Use PWM input capture on PB10 and PB11 (duty cycle mapped to 0 to -16000, 0, 16000)
 //#define SW_PWM_LEFT            1         // Use PWM input capture on PA2 and PA3 (duty cycle mapped to 0 to -16000, 0, 16000)   (cant be use with extbrk on PA2/PA3)
 //#define CONTROL_PPM_LEFT       0         // use PPM-Sum as input on the LEFT cable. Number indicates priority for dual-input. Disable DEBUG_SERIAL_USART2!
 //#define PPM_NUM_CHANNELS       1         // total number of PPM channels to receive, even if they are not used.
-//#define CONTROL_SERIAL_USART3  0         // left sensor board cable, disable if ADC or PPM is used! For Arduino control check the hoverSerial.ino
-//#define FEEDBACK_SERIAL_USART3           // left sensor board cable, disable if ADC or PPM is used!
-  #define PRI_INPUT1             0, -16000, 0, 16000,   0    //change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
-  #define PRI_INPUT2             2, -16000, 0, 16000,   0    //change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
+#define CONTROL_SERIAL_USART3  0         // left sensor board cable, disable if ADC or PPM is used! For Arduino control check the hoverSerial.ino
+#define FEEDBACK_SERIAL_USART3           // left sensor board cable, disable if ADC or PPM is used!
+  #define PRI_INPUT1             3, -1000, 0, 1000,  50    //change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
+  #define PRI_INPUT2             3, -1000, 0, 1000,  50    //change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
   #define RATE                   32767     //leave to max rate 32767 if you want instant response  (may be needed if you need slower response)                  
   #define FILTER                 65535     //leave to max filter 65535 if you want instant response (may be needed if input is noisy)
   //#define INVERT_R_DIRECTION             //invert right motor direction
   //#define INVERT_L_DIRECTION             //invert left motor direction
   //#define DEBUG_SERIAL_USART3            // left sensor cable debug
+
+// ---- Temperature: protecao para sessoes longas ----
+#undef TEMP_WARNING_ENABLE
+#undef TEMP_WARNING
+#undef TEMP_POWEROFF_ENABLE
+#undef TEMP_POWEROFF
+#define TEMP_WARNING_ENABLE     1     // Habilitado
+#define TEMP_WARNING            700   // [C x 10] = 70C
+#define TEMP_POWEROFF_ENABLE    1     // Habilitado
+#define TEMP_POWEROFF           800   // [C x 10] = 80C
 #endif
 
 
@@ -817,6 +845,7 @@
 #undef I_MOT_MAX
 #undef I_DC_MAX
 #undef FIELD_WEAK_ENA
+#undef N_POLE_PAIRS
 #undef QP
 #undef QI
 #undef DP
@@ -825,7 +854,7 @@
 
 #define GD32F103Rx              1   // define if you are using a GD32F103Rx MCU to set system clock to 108MHz  
 #define HOCP                        // Tie PA6/PB12 hardware over-current signals into TIM1/TIM8 break inputs
-#define BEEPER_OFF                  //use led as beeper
+//#define BEEPER_OFF                  //use led as beeper
 #define ENCODER_X                   //enable X encoder to right motor
 #define ENCODER_Y                   //enable Y encoder to left motor
 //#define INTBRK_L_EN               //enable brake resistor control on PHASE A left side driver, do not disable if break reistor is connected 
@@ -837,15 +866,15 @@
 
 #if defined (INTBRK_L_EN) || defined (EXTBRK_EN)
 
-  #define BRAKE_RESISTANCE 300                // [Ohm]3ohm X100 Value of the braking resistor. Set it to your own brake resistor resistance, increase the resistance here a bit for example I use 2.2ohm but I set to 3ohm here to be safe. 
-  #define BRKRESACT_SENS    40 / 20           //[A]40mA  Brake resistor activation sensitivity. Set same as MAX_REGEN_CURRENT if using battery. If using psu set 40mA-60mA. 
+  #define BRAKE_RESISTANCE 1000                // [Ohm]3ohm X100 Value of the braking resistor. Set it to your own brake resistor resistance, increase the resistance here a bit for example I use 2.2ohm but I set to 3ohm here to be safe. 
+  #define BRKRESACT_SENS    2           //[A]40mA  Brake resistor activation sensitivity. Set same as MAX_REGEN_CURRENT if using battery. If using psu set 40mA-60mA. 
   #define MAX_REGEN_CURRENT 0 / 20            // [A]0mA  Maximum regenerative current that can be dissipated in the PSU or BATTERY. Set in 20mA steps 0, 20, 40, 60, 80, 100 etc. Set 0 for PSU!
 
 #endif  
 
 #if defined ENCODER_X
 #define ENCODER_X_PPR            2048       // Pulses per revolution
-#define ALIGNMENT_X_POWER        3276       // [-] Voltage used for sensor alignment. [-16000, 16000]
+#define ALIGNMENT_X_POWER        6553       // [-] Voltage used for sensor alignment. [-16000, 16000]
 #endif
 #if defined ENCODER_Y
 #define ENCODER_Y_PPR            2048        // Pulses per revolution 
@@ -854,7 +883,7 @@
 
 #define BAT_CELLS               6       // battery number of cells. Normal Hoverboard battery: 10s = 36V nominal, 42V full charge. For 36V battery use 10, for 24V use 6, for 48V use 13 etc.
 
-#define QP              0.6f                          //[-] P gain   
+#define QP              0.4f                          //[-] P gain   
 #define QI              200.0f                                //[-] I gain
 //D axis control gains
 #define DP              0.3f                                   //[-] P gain   
@@ -873,26 +902,26 @@
   #define TANK_STEERING  
 #define MOTOR_LEFT_ENA                  // [-] Enable LEFT motor.  Comment-out if this motor is not needed to be operational
 #define MOTOR_RIGHT_ENA                 // [-] Enable RIGHT motor. Comment-out if this motor is not needed to be operational
-#define DIAG_ENA                 0               // [-] Motor Diagnostics enable flag: 0 = Disabled, 1 = Enabled (default)
-#define INACTIVITY_TIMEOUT       100
+#define DIAG_ENA                 1               // [-] Motor Diagnostics enable flag: 0 = Disabled, 1 = Enabled (default)
+#define INACTIVITY_TIMEOUT       0
 // Limitation settings
 #define I_MOT_MAX                15              // [A] Maximum single motor current limit
 #define I_DC_MAX                 17              // [A] Maximum stage2 DC Link current limit for Commutation and Sinusoidal types (This is the final current protection. Above this value, current chopping is applied. To avoid this make sure that I_DC_MAX = I_MOT_MAX + 2A)
 #define N_MOT_MAX                2000            // [rpm] Maximum motor speed limit
 
-#define DC_LINK_WATCHDOG_ENABLE               //Disables the motor without warning incase of under or overvoltage, disable if using hoverboard as vehicle
+//#define DC_LINK_WATCHDOG_ENABLE               //Disables the motor without warning incase of under or overvoltage, disable if using hoverboard as vehicle
 #define FIELD_WEAK_ENA           0 
 //#define RC_PWM_RIGHT           0         // Use RC PWM as input on the RIGHT cable. (duty cycle mapped to 0 to -1000, 0, 1000) Number indicates priority for dual-input. Disable DEBUG_SERIAL_USART3!
-#define HW_PWM                   0         // Use hw pwm pin PB5 on left side L_MTR_HALL_PHA  (lowest noise input)
+//#define HW_PWM                   0         // Use hw pwm pin PB5 on left side L_MTR_HALL_PHA  (lowest noise input)
 //#define CONTROL_ADC            1         // use ADC as input pn pins PA2 and PA3, cant be used with extbrk on PA2/PA3  
 //#define SW_PWM_RIGHT           0         // Use PWM input capture on PB10 and PB11 (duty cycle mapped to 0 to -16000, 0, 16000)
 //#define SW_PWM_LEFT            0         // Use PWM input capture on PA2 and PA3 (duty cycle mapped to 0 to -16000, 0, 16000)   (cant be use with extbrk on PA2/PA3)
 //#define CONTROL_PPM_LEFT       0         // use PPM-Sum as input on the LEFT cable. Number indicates priority for dual-input. Disable DEBUG_SERIAL_USART2!
 //#define PPM_NUM_CHANNELS       1         // total number of PPM channels to receive, even if they are not used.
-//#define CONTROL_SERIAL_USART3  0         //  disable if right uart port is used for sw pwm input capture
-//#define FEEDBACK_SERIAL_USART3           //  disable if right uart port is used for sw pwm input capture
-  #define PRI_INPUT1             0, -16000, 0, 16000,   0   //left motor change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
-  #define PRI_INPUT2             2, -16000, 0, 16000,   0   //right motor change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
+#define CONTROL_SERIAL_USART3  0         //  disable if right uart port is used for sw pwm input capture
+#define FEEDBACK_SERIAL_USART3           //  disable if right uart port is used for sw pwm input capture
+  #define PRI_INPUT1             3, -1000, 0, 1000,  50   //left motor change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
+  #define PRI_INPUT2             3, -1000, 0, 1000,  50   //right motor change depending on input type (may be -1000, 0, 1000 or -16000, 0, 16000)
 
   #undef RATE
   #undef FILTER 
